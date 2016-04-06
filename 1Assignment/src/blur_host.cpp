@@ -20,7 +20,7 @@ using std::endl;
 
 const float PI = 3.14159265358979;
 
-#define AUDIO_ON 1
+#define AUDIO_ON 0
 
 #if AUDIO_ON
     #include "sndfile.h"
@@ -167,8 +167,7 @@ int large_gauss_test(int argc, char **argv) {
     // As we iterate through the audio channels (or trials), we'll store that
     // channel's data on the GPU here
     //
-    // TODO: Allocate memory on the GPU here. Note that the audio data comes in
-    // as floating-point values, the number of which is stored in N.
+
     float *dev_input_data;
 
     // We have to store our impulse response on the GPU as well. (Fun fact:
@@ -176,16 +175,13 @@ int large_gauss_test(int argc, char **argv) {
     // quantities in special GPU memory regions. But for now, global memory will
     // do.)
     //
-    // TODO: Allocate memory on the GPU here. Size parameters are above.
-    //
-    // TODO: Since our impulse response will stay the same for all of
-    // the audio channels, we can copy over this data now as well.
-    // Copy the impulse response from host memory to the GPU.
+
     float *dev_blur_v;
 
-    // TODO: Allocate memory on the GPU here to store the output  audio signal.
     float *dev_out_data;
 
+    // Allocate all of the memory. We can copy over the data for blur_v because
+    // it is the same on all channels. 
     cudaMalloc((void **) &dev_input_data, n_frames * sizeof(float));
     cudaMalloc((void **) &dev_out_data, n_frames * sizeof(float));
     cudaMalloc((void **) &dev_blur_v, GAUSSIAN_SIZE * sizeof(float));
@@ -195,7 +191,8 @@ int large_gauss_test(int argc, char **argv) {
 
     // Iterate through each audio channel (e.g. 2 iterations for  stereo files)
     for (int ch = 0; ch < n_channels; ch++) {
-    cudaMemset(dev_out_data, 0, n_frames * sizeof (float));
+        // This needs to be reset per channel
+        cudaMemset(dev_out_data, 0, n_frames * sizeof (float));
     #if AUDIO_ON
         // Load this channel's data
         for (int i = 0; i < n_frames; i++)
@@ -245,8 +242,7 @@ int large_gauss_test(int argc, char **argv) {
         // Start timer...
         gpu_i = clock();
 
-        // TODO: Copy this channel's input data (stored in input_data) from host
-        // memory to the GPU
+        // Copy in the input for this channel
         cudaMemcpy(dev_input_data, input_data, n_frames*sizeof(float), cudaMemcpyHostToDevice);
     
         //
@@ -264,9 +260,8 @@ int large_gauss_test(int argc, char **argv) {
             cerr << "No kernel error detected" << endl;
 
 
-        // TODO: Now that kernel calls have finished, copy the output signal
-        // back from the GPU to host memory. (We store this channel's result
-        // in output_data on the host.)
+        // Copy the output signal back from the GPU to host memory. 
+        // (We store this channel's result in output_data on the host.)
         cudaMemcpy(output_data, dev_out_data, n_frames*sizeof(float), cudaMemcpyDeviceToHost);
 
 
@@ -314,8 +309,7 @@ int large_gauss_test(int argc, char **argv) {
     }
 
 
-    // TODO: Now that all channels have been processed, free all allocated
-    // memory on the GPU.
+    // Free all allocated memory on the GPU.
     cudaFree(dev_input_data);
     cudaFree(dev_blur_v);
     cudaFree(dev_out_data);
@@ -350,4 +344,10 @@ int main(int argc, char **argv) {
     return large_gauss_test(argc, argv);
 }
 
+// With audio, I see a speedup factor of ~21-26 on my desktop
+// Without audio, I see a speedup factor of ~29-33 on my desktop
 
+// I don't trust the speedup factors on Haru because of the server load
+// the night before the set is due. In addition, there is noticeable
+// delay on the server, and issues where the correct times are not 
+// recorded. (It is not possible for the GPU time to be 0 ms etc.)
