@@ -190,6 +190,7 @@ int large_gauss_test(int argc, char **argv) {
     cudaMalloc((void **) &dev_out_data, n_frames * sizeof(float));
     cudaMalloc((void **) &dev_blur_v, GAUSSIAN_SIZE * sizeof(float));
     cudaMemcpy(dev_blur_v, blur_v, GAUSSIAN_SIZE*sizeof(float), cudaMemcpyHostToDevice);
+    // cudaMemset((void **) &dev_out_data, 0, n_frames * sizeof (float));
     
     
 
