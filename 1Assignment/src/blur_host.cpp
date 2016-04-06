@@ -149,7 +149,7 @@ int large_gauss_test(int argc, char **argv) {
     // trials we run.
 
     // Can set as the number of trials
-    int n_channels = 1;
+    int n_channels = 2;
     // Can set how many data points arbitrarily
     int n_frames = 1e7;
 #endif
@@ -190,12 +190,12 @@ int large_gauss_test(int argc, char **argv) {
     cudaMalloc((void **) &dev_out_data, n_frames * sizeof(float));
     cudaMalloc((void **) &dev_blur_v, GAUSSIAN_SIZE * sizeof(float));
     cudaMemcpy(dev_blur_v, blur_v, GAUSSIAN_SIZE*sizeof(float), cudaMemcpyHostToDevice);
-    // cudaMemset((void **) &dev_out_data, 0, n_frames * sizeof (float));
     
     
 
     // Iterate through each audio channel (e.g. 2 iterations for  stereo files)
     for (int ch = 0; ch < n_channels; ch++) {
+    cudaMemset(dev_out_data, 0, n_frames * sizeof (float));
     #if AUDIO_ON
         // Load this channel's data
         for (int i = 0; i < n_frames; i++)
