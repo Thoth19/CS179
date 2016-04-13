@@ -61,25 +61,23 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
     const int end_j = j + 4;
 
-    int xOffset = blockIdx.x * blockDim.x;
-    int yOffset = blockDim.y*blockIdx.y;
+    int xOffset = blockIdx.x * 64;
+    int yOffset = blockIdx.y * 64;
 
-    __shared__ float data[1024];
+    __shared__ float data[64*65]; // We was an extra bank for padding
 
     for (; j < end_j; j++)
-        data[j + n * (i - yOffset) -xOffset] = input[i + n * j];
+        data[(j-yOffset) + 64 * (i - xOffset)+threadIdx.x] = input[i + n * j];
     __syncthreads();
 
     int k = 4*threadIdx.y;
     const int end_k = k + 4;
     int xIdx, yIdx;
-    for (; k <end_k; k ++)
+    for (; k < end_k; k ++)
     {
-        xIdx = threadIdx.x + (blockDim.y*blockIdx.y);
-        yIdx = (k+blockIdx.x * blockDim.x);
-        assert(n*(yIdx)+(xIdx) < n * n);
-        assert(threadIdx.x+64*k < n*n)
-        output[n*(yIdx)+(xIdx)] = data[threadIdx.x+64*k];
+        xIdx = threadIdx.x + (64*blockIdx.y);
+        yIdx = (k+blockIdx.x * 64);
+        output[n*(yIdx)+(xIdx)] = data[threadIdx.x+65*k];
     }
 }
 
