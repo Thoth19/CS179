@@ -1,0 +1,137 @@
+Question 1.1
+Approximately how many arithmetic instructions does it take to hide the latency
+of a single arithmetic instruction on a GK110?
+
+The latency of an arithmatic instruction is 10 ns on Kepler. So, on a Fermi (GK110)
+we expect the latency to be 20 ns. (Lecture 4)
+A GK110 starts 2 instructions per warp and can act on 4 warps per clock. (Lecture 5) 
+The clock speed on a GPU is 1 clock/ns. Since this isn't a latency, we don't need to 
+double it for the Fermi architecture. (Lecture 4).
+Starting 8 (4*2) instructions takes 1 clock. To take up 20ns, we need 160 (8*20) 
+arithmatic instructions.
+
+Question 1.2a
+
+From piazza, we know that threadIdx.x varies faster than threadIdx.y.
+Thus, the first warp is the first 32 threads, so idx ranges from 
+0 + 32*0 to 0+32*31. All of these values are equal modulo 32. Since
+every warp is equal modulo 32, the if block in the kernel is always
+the same for every thread in a given warp, Thus, there is no
+warp divergence. 
+
+Question 1.2b
+
+It depends on the compilier. Suppose we have a naive compilier. 
+This code fragment diverges. Each thread in a warp has a different threadIdx.x
+value. Thus, each thread has to run through the loop a different number of times
+which causes divergence because the later threads take longer.
+If we had a smart enough compilier, there might not be divergence (or at least lessened
+divergence) because it would optimize to setting result to pi^threadIdx.x
+rather than running a loop.
+
+Question 1.3a
+
+This write is coalesced. A single warp, accesses (and writes) 32 adjacent floats
+starting at a memory aligned region. Since floats are 32 bits = 4 bytes, this is
+one 128 byte cache line.
+
+Question 1.3b
+This write is not coalesced because the example in 1.3a accesses the same data
+but takes only one cache line. It accesses data[0],32,64,..31*32.
+Since the blocks are of size 128, we need to touch 8 blocks. because 128/32=4
+and 32/4=8. 
+
+Question 1.3c
+This write is also not coalesced because it is not aligned properly. Unlike 
+1.3a, is still takes up the same amount of memory, but because it is misaligned
+it requires an extra cache block to write to the 1+31+32*0=32'nd float. This is
+at byte 128, which is on the second cache as opposed to the previous floats
+which were on the first cache block.
+
+Question 1.4a
+There are no bank conflicts. Each warp is 32 threads, so each warp has a fixed
+threadIdx.y and threadIdx.x caries from 0 to 31. There are 32 banks.
+Thus, each thread in a warp accesses a different point of data
+from output[i+32j]. Thus, there is no bank conflict.
+We must also consider the for loop. Note that there is no divergence because the 
+iterations in the loops is fixed, so each thread is working on the same command
+in the warp.
+Accessing lhs[i+32k] is not a bank conflict because 32%32=0, so each thread in
+the warp accesses bank i. The same holds true for lhs[i+32(k+1)].
+Accessing rhs[k+128j] does not cause a bank conflict because every thread in the
+warp has the same value for j. Thus, the same value is broadcast, avoiding
+any conflicts. For the same reason, rhs[(k+1)+128j] does not cause any conflicts
+Therefore, the whole kernel does not cause conflicts.
+
+Question 1.4b
+load output[i + 32 * j] into register 0
+load lhs[i + 32 * k] into register 1
+load rhs[k + 128 * j] into register 2
+FMA registers 0,1 and 2.
+store register 0 into output[i + 32 * j]
+
+load output[i + 32 * j] into register 0
+load lhs[i + 32 * (k + 1)] into register 1
+load rhs[(k + 1) + 128 * j] into register2
+FMA registers 0,1 and 2
+store register 0 into output[i + 32 * j]
+
+Question 1.4c
+
+The FMA command is dependent on the previous three instructions in both cases.
+In addition, storing register 0 is dependent on the FMA instruction.
+
+Question 1.4d
+
+load output[i + 32 * j] into register 0
+load lhs[i + 32 * k] into register 1
+load rhs[k + 128 * j] into register 2
+FMA registers 0,1 and 2.
+
+load lhs[i + 32 * (k + 1)] into register 1
+load rhs[(k + 1) + 128 * j] into register2
+FMA registers 0,1 and 2
+store register 0 into output[i + 32 * j]
+
+There is no way to reduce the dependencies further because we can't compute
+the FMAs without loading the sub-pieces that are used as inputs. 
+
+Question 1.4e
+
+We need to pull the original value of output[i+32*j],
+but it isn't needed again until after the loop ends.
+
+load output[i + 32 * j] into register 0
+
+load lhs[i + 32 * k] into register 1
+load rhs[k + 128 * j] into register 2
+FMA registers 0,1 and 2.
+load lhs[i + 32 * (k + 1)] into register 1
+load rhs[(k + 1) + 128 * j] into register2
+FMA registers 0,1 and 2
+
+store register 0 into output[i + 32 * j]
+
+Since we haven't modified the lhs or rhs data, we don't need
+to store that back into shared memory -- only the value that
+belongs in output.
+
+
+Bonus:
+
+Suppose the vectors are incredibly large and do not fit into DRAM. Then,
+using vec_add twice would be a poor choice because it would require more
+disk accesses. This problem is still relevant as long as the vector is larger
+than the amount of memory that can be stored in the fastest cache.
+We can store x[i], y[i], z[i] all in registers and only have to read them
+from ram or disk once in the optimized method. However, in the vec_add method,
+we have to save values into a, and then read them out again.
+
+Though this is not likely to affect speed by very much, the second
+method means we only have to run through the loop once. This saves us
+n addition steps where we would have to iterate the loop variable
+because we only loop through once.
+
+Another reason that the first method is slower is that there is overhead
+to call functions. Creating the conext on the stack etc. is a non-neglible 
+amount of time when we are working with the scale of a GPU.
