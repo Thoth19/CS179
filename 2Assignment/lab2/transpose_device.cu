@@ -87,42 +87,31 @@ void optimalTransposeKernel(const float *input, float *output, int n) {
     // Use any optimization tricks discussed so far to improve performance.
     // Consider ILP and loop unrolling.
 
-
-    // Moved the variable declarations to the top of the function
-    // in order to reduce dependency isues.
-    int k = 4*threadIdx.y;
-    // We don't need these two, but they make the next definition
-    // make sense.
-    // int nyIdx = n*(k+blockIdx.x * 64);
-    // int xIdx = threadIdx.x + (64*blockIdx.y);
-    int nyIdxPlusxIdx = n*(k+blockIdx.x * 64) + threadIdx.x + (64*blockIdx.y);
-    int data_idx = threadIdx.x+65*k;
-    
+    // Put the declarations at the top to avoid dependencies.
+	// Create new variables to precompute the array indices.
     const int i = threadIdx.x + 64 * blockIdx.x;
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
 
-    int xOffset = blockIdx.x * 64;
-    int yOffset = blockIdx.y * 64;
+	int data_field = (j- (blockIdx.y * 64)) + 64 * (i - (blockIdx.x * 64))+threadIdx.x;
+	int input_field = i + n * j;
 
-    int data_field = (j-yOffset) + 64 * (i - xOffset)+threadIdx.x;
-    int input_field = i + n * (j);
+    int k = 4*threadIdx.y;
     __shared__ float data[64*65]; // We was an extra bank for padding
+	int nyIdxPlusxIdx = threadIdx.x + (64*blockIdx.y) + n*(k + blockIdx.x*64);
+	int data_out = threadIdx.x+65*k;
 
-    // Unrolled the loop. Used precomputed values.
+    // Unroll the loop.
     data[data_field] = input[input_field];
-    data[data_field+1] = input[input_field + n];
-    data[data_field+2] = input[input_field + 2*n];
-    data[data_field+3] = input[input_field + 3*n];
+    data[data_field + 1] = input[input_field + n];
+    data[data_field + 2] = input[input_field + 2 * n];
+    data[data_field + 3] = input[input_field + 3 * n];
     __syncthreads();
 
-
-    // Unrolled loop. Only need to compute xIdx once.
-    // Using precomputed values that are at top of function
-
-    output[nyIdxPlusxIdx]       = data[data_idx];
-    output[nyIdxPlusxIdx +   n] = data[data_idx];
-    output[nyIdxPlusxIdx + 2*n] = data[data_idx];
-    output[nyIdxPlusxIdx + 3*n] = data[data_idx];
+	// Unroll the other loop
+    output[nyIdxPlusxIdx] = data[data_out];
+    output[nyIdxPlusxIdx + n] = data[data_out+65];
+    output[nyIdxPlusxIdx + 2*n] = data[data_out+130];
+    output[nyIdxPlusxIdx+ 3*n] = data[data_out+195];
 }
 
 void cudaTranspose(
