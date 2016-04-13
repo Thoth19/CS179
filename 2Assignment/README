@@ -1,3 +1,4 @@
+Part 1
 Question 1.1
 Approximately how many arithmetic instructions does it take to hide the latency
 of a single arithmetic instruction on a GK110?
@@ -11,7 +12,6 @@ Starting 8 (4*2) instructions takes 1 clock. To take up 20ns, we need 160 (8*20)
 arithmatic instructions.
 
 Question 1.2a
-
 From piazza, we know that threadIdx.x varies faster than threadIdx.y.
 Thus, the first warp is the first 32 threads, so idx ranges from 
 0 + 32*0 to 0+32*31. All of these values are equal modulo 32. Since
@@ -20,7 +20,6 @@ the same for every thread in a given warp, Thus, there is no
 warp divergence. 
 
 Question 1.2b
-
 It depends on the compilier. Suppose we have a naive compilier. 
 This code fragment diverges. Each thread in a warp has a different threadIdx.x
 value. Thus, each thread has to run through the loop a different number of times
@@ -30,7 +29,6 @@ divergence) because it would optimize to setting result to pi^threadIdx.x
 rather than running a loop.
 
 Question 1.3a
-
 This write is coalesced. A single warp, accesses (and writes) 32 adjacent floats
 starting at a memory aligned region. Since floats are 32 bits = 4 bytes, this is
 one 128 byte cache line.
@@ -77,12 +75,10 @@ FMA registers 0,1 and 2
 store register 0 into output[i + 32 * j]
 
 Question 1.4c
-
 The FMA command is dependent on the previous three instructions in both cases.
 In addition, storing register 0 is dependent on the FMA instruction.
 
 Question 1.4d
-
 load output[i + 32 * j] into register 0
 load lhs[i + 32 * k] into register 1
 load rhs[k + 128 * j] into register 2
@@ -97,7 +93,6 @@ There is no way to reduce the dependencies further because we can't compute
 the FMAs without loading the sub-pieces that are used as inputs. 
 
 Question 1.4e
-
 We need to pull the original value of output[i+32*j],
 but it isn't needed again until after the loop ends.
 
@@ -115,6 +110,14 @@ store register 0 into output[i + 32 * j]
 Since we haven't modified the lhs or rhs data, we don't need
 to store that back into shared memory -- only the value that
 belongs in output.
+
+TIME:
+It took me around 1-2 hours to do part 1. I didn't do it consecutively,
+so I can't be very sure how long it took. Pretty sure it took less than
+3 hours.
+
+Part 2
+
 
 
 Bonus:
