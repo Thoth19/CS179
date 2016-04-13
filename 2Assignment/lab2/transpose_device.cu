@@ -77,6 +77,8 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
     {
         xIdx = threadIdx.x + (blockDim.y*blockIdx.y);
         yIdx = (k+blockIdx.x * blockDim.x);
+        assert(n*(yIdx)+(xIdx) < n * n);
+        assert(threadIdx.x+64*k < n*n)
         output[n*(yIdx)+(xIdx)] = data[threadIdx.x+64*k];
     }
 }
