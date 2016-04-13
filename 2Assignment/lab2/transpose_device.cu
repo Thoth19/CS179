@@ -35,13 +35,17 @@
  */
 __global__
 void naiveTransposeKernel(const float *input, float *output, int n) {
-    // TODO: do not modify code, just comment on suboptimal accesses
 
     const int i = threadIdx.x + 64 * blockIdx.x;
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
     const int end_j = j + 4;
 
     for (; j < end_j; j++)
+        /*
+        There are memory coalescing issues with respect to writing the
+        output. n is a multiple of 64. We are using one cache line per
+        float on the output. This is very inefficient.
+        */
         output[j + n * i] = input[i + n * j];
 }
 
@@ -52,14 +56,26 @@ void shmemTransposeKernel(const float *input, float *output, int n) {
     // memory bank conflicts (0 bank conflicts should be possible using
     // padding). Again, comment on all sub-optimal accesses.
 
-    // __shared__ float data[???];
 
     const int i = threadIdx.x + 64 * blockIdx.x;
     int j = 4 * threadIdx.y + 64 * blockIdx.y;
     const int end_j = j + 4;
 
+    __shared__ float data[1024];
+
     for (; j < end_j; j++)
-        output[j + n * i] = input[i + n * j];
+        data[j + n * i] = input[i + n * j];
+    __syncthreads();
+
+    int k = 4*threadIdx.y;
+    const int end_k = k + 4;
+    int xIdx, yIdx;
+    for (; k <end_k; k ++)
+    {
+        xIdx = threadIdx.x + (blockDim.y*blockIdx.y);
+        yIdx = (k+blockIdx.x * blockDim.x);
+        output[n*(yIdx)+(xIdx)] = data[threadIdx.x+64*k];
+    }
 }
 
 __global__
