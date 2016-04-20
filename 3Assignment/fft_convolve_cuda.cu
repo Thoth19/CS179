@@ -54,12 +54,12 @@ cudaProdScaleKernel(const cufftComplex *raw_data, const cufftComplex *impulse_v,
     */
     // We already did the forward DFT on the input and impulse in-place
     // so we don't need to do that here.
-    out_data[threadIdx].x = ((raw_data[threadIdx].x * impulse_v[threadIdx].x) 
-        - (raw_data[threadIdx].y * impulse_v[threadIdx].y)) 
-        / (padded_length * padded_length);
-    out_data[threadIdx].y = ((raw_data[threadIdx].x * impulse_v[threadIdx].y)
-        - (raw_data[threadIdx].y * impulse_v[threadIdx].x)) 
-        / (padded_length * padded_length);
+    out_data[thread_index].x = ((raw_data[thread_index].x * impulse_v[thread_index].x) 
+        - (raw_data[thread_index].y * impulse_v[thread_index].y)) 
+        / (1e6);
+    out_data[thread_index].y = ((raw_data[thread_index].x * impulse_v[thread_index].y)
+        - (raw_data[thread_index].y * impulse_v[thread_index].x)) 
+        / (1e6);
 }
 
 __global__

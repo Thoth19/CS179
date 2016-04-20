@@ -22,7 +22,7 @@ using std::endl;
 
 const float PI = 3.14159265358979;
 
-#define AUDIO_ON 1
+#define AUDIO_ON 0
 
 #if AUDIO_ON
     #include <sndfile.h>
@@ -178,7 +178,7 @@ int large_gauss_test(int argc, char **argv){
     parameter to control how many trials we run. */
 
     int nChannels = 2;      // Can set as the number of trials
-    int N = 1e7;        // Can set how many data points arbitrarily
+    int N = 1e6;        // Can set how many data points arbitrarily
     int impulse_length = GAUSSIAN_SIZE;
 
 #endif
@@ -270,6 +270,7 @@ int large_gauss_test(int argc, char **argv){
     /* Iterate through each audio channel (e.g. 2 iterations for 
     stereo files) */
     for (int ch = 0; ch < nChannels; ch++){
+        cudaMemset(dev_out_data, 0, padded_length * sizeof(cufftComplex));
 
 
 
@@ -592,8 +593,7 @@ int large_gauss_test(int argc, char **argv){
         Note that we have a padded-length signal, so be careful of the
         size of the memory copy. */
 
-        // Whelp, don't we have issues with float vs Complex type. 
-        cudaMemcpy(output_data, dev_out_data, padded_length * sizeof(float), cudaMemcpyDeviceToHost);
+        cudaMemcpy(output_data, dev_out_data, padded_length * sizeof(cufftComplex), cudaMemcpyDeviceToHost);
 
 
         cout << endl;
