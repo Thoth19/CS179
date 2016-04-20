@@ -89,18 +89,17 @@ cudaMaximumKernel(cufftComplex *out_data, float *max_abs_val,
     // Put the data into shared memory.
     unsigned int thread_index_start = threadIdx.x;
     unsigned thread_index = thread_index_start;
-    unsigned int shared_size = sizeof(cufftComplex)*padded_length/(blocks - 1);
+    unsigned int shared_size = sizeof(float)*padded_length/(gridDim.x - 1);
     extern __shared__ float shared_out_data[];
     // Which shared memory block am I?
     unsigned int shmem_block = blockIdx.x * shared_size;
     unsigned int shared_div = 2;
     while (thread_index < shared_size)
     {
-        shared_out_data[threadIdx.x] = out_data[threadIdx.x + shmem_block].x;
+        shared_out_data[thread_index] = out_data[thread_index + shmem_block].x;
         thread_index += (blockDim.x); 
     }
     __syncthreads();
-
 
     // reset thread_index to the beginning
     thread_index = thread_index_start;
@@ -127,7 +126,7 @@ cudaMaximumKernel(cufftComplex *out_data, float *max_abs_val,
     }
     // at the end of everything atomic max with maxabsval so that our threads
     // can communicate with one another
-    atomicMax(max_abs_val, out_data[0]);
+    atomicMax(max_abs_val, shared_out_data[0]);
 }
 
 __global__
@@ -168,9 +167,7 @@ void cudaCallMaximumKernel(const unsigned int blocks,
         const unsigned int padded_length) {
         
     /* Call the max-finding kernel. */
-    cudaCallMaximumKernel<<<blocks, threadsPerBlock, 
-        sizeof(float)*padded_length/(blocks - 1)>>> 
-        (out_data, max_abs_val, padded_length);
+    cudaMaximumKernel<<<blocks, threadsPerBlock, sizeof(float)*padded_length/(blocks - 1)>>> (out_data, max_abs_val, padded_length);
 }
 
 

@@ -526,14 +526,13 @@ int large_gauss_test(int argc, char **argv){
         /* Allocate memory to store the maximum magnitude found. */
         cudaMalloc((void **) &dev_max_abs_val, sizeof(float));
         /* Set it to 0 in preparation for running. */
-        cudaMemset(dev_max_abs_val, 0, sizeof (float))
+        cudaMemset(dev_max_abs_val, 0, sizeof (float));
 
 
         /* NOTE: This is a function in the fft_convolve_cuda.cu file,
         where you'll fill in the kernel call for finding the maximum
         of the output signal. */
-        cudaCallMaximumKernel(blocks, local_size, dev_out_data,
-            dev_max_abs_val, padded_length);
+        cudaCallMaximumKernel(blocks, local_size, dev_out_data, dev_max_abs_val, padded_length);
 
         // Check for errors on kernel call
         err = cudaGetLastError();
@@ -605,7 +604,6 @@ int large_gauss_test(int argc, char **argv){
     cudaFree(dev_input_data);
     cudaFree(dev_impulse_v);
     cudaFree(dev_out_data);
-    cudaFree(dev_max_abs_val);
 
     // Free memory on host
     free(input_data);
