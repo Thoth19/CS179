@@ -138,10 +138,6 @@ int large_gauss_test(int argc, char **argv){
     assert(amt_read_input == in_file_info.frames * in_file_info.channels);
 
 
-
-
-
-
     // Open impulse response audio file
     impulse_file = sf_open(argv[4], SFM_READ, &impulse_file_info);
     if (!impulse_file){
@@ -154,12 +150,6 @@ int large_gauss_test(int argc, char **argv){
     amt_read_impulse = sf_read_float(impulse_file, allchannel_impulse, 
         impulse_file_info.frames * impulse_file_info.channels);
     assert(amt_read_impulse == impulse_file_info.frames * impulse_file_info.channels);
-
-
-
-
-
-
 
 
     // For now, have same number of channels in both files
@@ -533,18 +523,10 @@ int large_gauss_test(int argc, char **argv){
         float max_abs_val_fromGPU;
         float *dev_max_abs_val;
 
-
-        // Exclude these from timer since the only reason we have these is
-        // for testing purposes
-        // Also keep this in the student code
-        // NVM they need this for global ops
-        // Also need to memset to 0 for baseline value
-
-        /* TODO 2: Allocate memory to store the maximum magnitude found. 
-        (You only need enough space for one floating-point number.) */
-
-        /* TODO 2: Set it to 0 in preparation for running. 
-        (Recommend using cudaMemset) */
+        /* Allocate memory to store the maximum magnitude found. */
+        cudaMalloc((void **) &dev_max_abs_val, sizeof(float));
+        /* Set it to 0 in preparation for running. */
+        cudaMemset(dev_max_abs_val, 0, sizeof (float))
 
 
         /* NOTE: This is a function in the fft_convolve_cuda.cu file,
@@ -623,6 +605,7 @@ int large_gauss_test(int argc, char **argv){
     cudaFree(dev_input_data);
     cudaFree(dev_impulse_v);
     cudaFree(dev_out_data);
+    cudaFree(dev_max_abs_val);
 
     // Free memory on host
     free(input_data);
