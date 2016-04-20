@@ -39,6 +39,7 @@ cudaProdScaleKernel(const cufftComplex *raw_data, const cufftComplex *impulse_v,
     cufftComplex *out_data, int padded_length) {
 
     unsigned int thread_index = blockIdx.x * blockDim.x + threadIdx.x;
+    cufftComplex padded_factor = make_cuFloatComplex(1./padded_length, 0.0);
 
     /* TODO: Implement the point-wise multiplication and scaling for the
     FFT'd input and impulse response. 
@@ -54,12 +55,19 @@ cudaProdScaleKernel(const cufftComplex *raw_data, const cufftComplex *impulse_v,
     */
     // We already did the forward DFT on the input and impulse in-place
     // so we don't need to do that here.
-    out_data[thread_index].x = ((raw_data[thread_index].x * impulse_v[thread_index].x) 
+    while (thread_index < (unsigned int) padded_length)
+    {
+	/*    
+	out_data[thread_index].x = ((raw_data[thread_index].x * impulse_v[thread_index].x) 
         - (raw_data[thread_index].y * impulse_v[thread_index].y)) 
-        / (1e6);
-    out_data[thread_index].y = ((raw_data[thread_index].x * impulse_v[thread_index].y)
+        / (padded_length);
+	    out_data[thread_index].y = ((raw_data[thread_index].x * impulse_v[thread_index].y)
         - (raw_data[thread_index].y * impulse_v[thread_index].x)) 
-        / (1e6);
+        / (padded_length); 
+*/
+	out_data[thread_index] = cuCmulf(cuCmulf(raw_data[thread_index], impulse_v[thread_index]), padded_factor);
+	thread_index += (blockDim.x * gridDim.x); 
+    }
 }
 
 __global__
