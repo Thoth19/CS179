@@ -146,7 +146,11 @@ int main(int argc, char** argv){
 
     /* TODO: Allocate memory for all GPU storage above, copy input sinogram
     over to dev_sinogram_cmplx. */
+    cudaMalloc((void **) &output_dev, size_result * sizeof(float));
+    cudaMalloc((void **) &dev_sinogram_cmplx, sinogram_width*nAngles*sizeof(cufftComplex));
+    cudaMalloc((void **) &dev_sinogram_float, sinogram_width*nAngles*sizeof(float));
 
+    cudaMemcpy(dev_sinogram_cmplx, sinogram_host, sinogram_width*nAngles*sizeof(cufftComplex), cudaMemcpyHostToDevice);
 
     /* TODO 1: Implement the high-pass filter:
         - Use cuFFT for the forward FFT
@@ -158,6 +162,26 @@ int main(int argc, char** argv){
         Note: If you want to deal with real-to-complex and complex-to-real
         transforms in cuFFT, you'll have to slightly change our code above.
     */
+    cufftHandle plan;
+    int batch = 1;
+    cufftPlan1d(&plan, sinogram_width*nAngles*sizeof(cufftComplex), CUFFT_C2C, batch);
+
+    cufftExecC2C(plan, dev_sinogram_cmplx, dev_sinogram_cmplx, CUFFT_FORWARD);
+
+    // Do frequency scaling
+    cudaCallHighPass(nBlocks, threadsPerBlock, dev_sinogram_cmplx, dev_sinogram_cmplx,
+        sinogram_width*nAngles);
+
+    cufftExecC2C(plan, dev_sinogram_cmplx, dev_sinogram_cmplx, CUFFT_INVERSE);
+    // Remove the imaginary parts
+    cudaCallComplexArrayToFloat(nBlocks, threadsPerBlock, 
+            dev_sinogram_cmplx, dev_sinogram_float,
+            sinogram_width * nAngles);
+
+    // Clean up plan and obsolete variable
+    cufftDestroy(plan);
+    cudaFree(dev_sinogram_cmplx);
+
 
 
     /* TODO 2: Implement backprojection.
@@ -166,6 +190,9 @@ int main(int argc, char** argv){
         - Copy the reconstructed image back to output_host.
         - Free all remaining memory on the GPU.
     */
+    // Free remaining memory
+    cudaFree(dev_sinogram_float);
+    cudaFree(output_dev);
 
     
     /* Export image data. */
