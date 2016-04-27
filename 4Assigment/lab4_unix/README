@@ -1,0 +1,54 @@
+Question 1.1
+
+Filling shared memory requires pulling data from global memory. Therefore,
+moving data into shared memory takes an access. Thus, in the case where every
+data element is only accessed once, moving the data to shared memory would
+hurt preformance rather than help it. In addition, using shared memory decreases
+the size of other types of memory which might be more beneficial to the program
+than the shared memory. However, in cases where much of the data is accessed many
+times, there would be a preformance increase. Even though copying to shared memory
+takes time, it is faster to access from the kernel threads, so with enough accesses
+per data element, this will be faster.
+
+Question 1.2
+
+Suppose the F array stores boolean values for frontier. The sum of these booleans
+is equal to the number of "Trues." Using the parralel reduction mechanism for
+summing as described in Lec 7, we can compute the sum of a an array very quickly.
+This means that we can sum up the number of "Trues," and compare it to the size of 
+the array. We should know the number of elements of the tree before we start the
+BFS, so we have that value. Thus, we can check whether F is all True or if there
+are Falses quite quickly.
+
+Question 1.3
+
+One way is to have the threads add one to a global value that records the number
+of "Trues." In this case, if F is in shared memory, then we can use a shared
+memory integer, but if F is in global memory, then we want to use global memory.
+This is problematic because we would need to use atomic add rather than regular
+addition to make sure that there are no race conditions. Atomic adds process in
+serial rather than in parellel. 
+Consider a very dense graph. In this case, there will be few frontier layers. Thus,
+there are many threads being run at the same time, so an atomic add is going to
+cost more time than usual. Thus, the answer from 1.2 is better.
+Consider a sparse graph. In this case, there will be many frontier layers. There
+will also be fewer simultaneous threads. The solution from 1.2 costs time for
+every frontier layer. Consider the extreme case where the tree is actually a linked
+list. In this case, an atomic add is just as costly as a regular add, which is
+cheaper than the summing of a boolean list as in 1.2. Thus, the atomic add solution
+would be better in this case.
+
+Question 2
+
+There are atomically unsafe operations. Due to the nature of these emissions (having
+different values of theta), they will be intersecting lines. Thus, if we divide
+up the threads by entries in the list, then more than one thread will want to 
+update the value for a given pixel. This is not an atomically safe add because
+there is no garuntee that one thread will finish before the other. We would
+need to use an atomic add which is much slower.
+We can use texture memory to store the input data because we do not need to modify
+it. Thus, we can take advantage of the fact that texture memory can ignore coalescing.
+We might not get the full benefit of the 2dimensional caching on texture memory
+like this, but we still get the benefit of coalescing issues because there is
+no reason we would need write permissions to this data. The atomic adds can
+be done on shared memory. 

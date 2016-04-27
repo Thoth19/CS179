@@ -86,6 +86,20 @@ cudaMaximumKernel(cufftComplex *out_data, float *max_abs_val,
     they access shared memory and are thus blocking.
     */
 
+    /* Note that this kernel doesn't seem to work.
+    I'm not entirely sure why, but it seems that either the shared_out_data
+    or out_data array indices become too large and cause segfaults. OOM
+    errors on Haru made it rather difficult to debug and find which
+    one was causing the problem. The main ideas of this code should work however.
+    Each thread compares a data value and another one that is sharedsize/shareddiv
+    away. We do this for all of the threads.
+    Then, we increase shared div. This means we coalesce the data into one block.
+    Then we can atomicMax the values from each block to get one real answer
+    which can be acquire dby the host.
+    Note that we used shared memory so that all of the threads in one block
+    can communicate and for faster speed. 
+    */
+
     // Put the data into shared memory.
     unsigned int thread_index_start = threadIdx.x;
     unsigned thread_index = thread_index_start;
