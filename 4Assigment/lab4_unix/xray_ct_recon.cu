@@ -16,6 +16,7 @@ Modified by Jordan Bonilla and Matthew Cedeno (2016)
 #include <stdio.h>
 #include <cufft.h>
 #include <time.h>
+#include <math.h>
 #include "ta_utilities.hpp"
 
 #define PI 3.14159265358979
@@ -59,11 +60,32 @@ void cudaCallComplexArrayToFloat(const unsigned int blocks,
         const cufftComplex *raw_data,
         float *out_data,
         const unsigned int length);
-void cudaCallHighPass(const unsigned int blocks,
+void cudaCallHighPassEven(const unsigned int blocks,
         const unsigned int threadsPerBlock,
         const cufftComplex *raw_data,
         const cufftComplex *out_data,
         const unsigned int length);
+void cudaCallHighPassOdd(const unsigned int blocks,
+        const unsigned int threadsPerBlock,
+        const cufftComplex *raw_data,
+        const cufftComplex *out_data,
+        const unsigned int length);
+
+void cudaBackProject(const float * input, 
+    float * output, 
+    const unsigned int height
+    const unsigned int width,
+    const unsigned int nAngles, 
+    const unsigned int sinogram_width);
+
+void callBackProject(const unsigned int blocks,
+        const unsigned int threadsPerBlock,
+        const cufftComplex *raw_data,
+        cufftComplex *out_data,
+        const unsigned int height,
+        const unsigned int width,
+        const unsigned int nAngles, 
+        const unsigned int sinogram_width);
 
 __global__
 void
@@ -193,6 +215,66 @@ void cudaCallHighPass(const unsigned int blocks,
 }
 
 
+__global__
+void
+cudaBackProject(const float * input, float * output, const unsigned int height, 
+    const unsigned int width, 
+    const unsigned int nAngles, const unsigned int sinogram_width)
+{
+    unsigned int xindex, yindex;
+    float theta;
+    const float theta_base = 1./((float)nAngles);
+
+    xindex = blockIdx.x*blockDim.x+threadIdx.x;
+    yindex = blockIdx.y*blockDim.y+threadIdx.y;
+    unsigned int theta_i = 0;
+    float m,q;
+    unsigned int x_0,y_0;
+    unsigned int dist;
+
+    // TODO actually do the kernel
+    // tex2D(texreference, xindex, yindex);
+
+    // We are parallelizing over x and y, so the loop here is on theta.
+    while (yindex < height)
+    {
+        while (xindex < width)
+        {
+            while (theta_i < nAngles)
+            {
+                //sinogram width, nAngles
+                theta = theta_base * theta_i;
+                m = -cos(theta) / sin(theta);
+                q = -1 / m;
+                // To find x_0 and y_0, we use point-slope form
+                x_0 = (yindex - m*xindex)/(q-m);
+                y_0 = y_index + m*(x_0 - xindex);
+                dist = sqrt(x_0*x_0 + y_0 + y_0);
+                output_dev[yindex*sinogram_width + xindex] = 
+                    tex2D(texreference, (int) theta, dist);
+            }
+            xindex += (blockDim.x * gridDim.x);
+        }
+        yindex += (blockDim.y * gridDim.y);
+    }
+}
+
+void callBackProject(const unsigned int blocks,
+        const unsigned int threadsPerBlock,
+        const cufftComplex *raw_data,
+        cufftComplex *out_data,
+        const unsigned int height,
+        const unsigned int width,
+        const unsigned int nAngles, 
+        const unsigned int sinogram_width)
+/* Wrapper for cudaBackProject */
+{
+     cudaBackProject<<<blocks, threadsPerBlock>>> (raw_data,
+            out_data, height, width, nAngles,  sinogram_width);
+}
+
+texture<float, 2, cudaReadModeElementType> texreference; 
+
 int main(int argc, char** argv){
     // These functions allow you to select the least utilized GPU
     // on your system as well as enforce a time limit on program execution.
@@ -318,6 +400,41 @@ int main(int argc, char** argv){
     cufftDestroy(plan);
     cudaFree(dev_sinogram_cmplx);
 
+    // Set up the filtered sinogram in texture memory
+    dim3 blocknum;
+    dim3 blocksize;
+    cudaArray* carray;
+    cudaChannelFormDesc channel;
+    float * dev_sinogram_float_texture;
+    float * host_sinogram_float_texture = (float *) malloc(sizeof(float) * sinogram_width * nAngles);
+    cudaMalloc((void **) &dev_sinogram_float_texture, sizeof(float) * sinogram_width * nAngles);
+
+    //Set up the host array
+    for (int i = 0; i < sinogram_width * nAngles; ++i)
+    {
+        host_sinogram_float_texture[i] = 0;
+    }
+
+    // Set up channel
+    channel = cudaCreateChannelDesc<float>();
+    cudaMallocArray(&carray, &channel, sinogram_width, nAngles);
+    int bytes = sizeof(float) * nAngles * sinogram_width;
+    cudaMemcpyToArray(carray, 0,0, host_sinogram_float_texture, bytes, cudaMemcpyHostToDevice);
+
+    // Set texture properties
+    texreference.filterMode=cudaFilterModeLinear;
+    texreference.addressMode[0]=cudaAddressModeClamp;
+    texreference.addressMode[1]=cudaAddressModeClamp;
+
+    // Bind data to the texture
+    cudaBindTextureToArray(texreference,carray);
+    blocksize.x = 16;
+    blocksize.y = 16;
+    blocknum.x=(int) ceil((float) size/16);
+    blocknum.y=(int) ceil((float) size/16);
+
+    // Do the kernel Remember to use
+    // <<<blocknum, blocksize>>> 
 
 
     /* TODO 2: Implement backprojection.
@@ -326,9 +443,18 @@ int main(int argc, char** argv){
         - Copy the reconstructed image back to output_host.
         - Free all remaining memory on the GPU.
     */
+
+
+    // Copy result back to host
+    cudaMemcpy(output_host, output_dev, size_result, cudaMemcpyDeviceToHost);
+
     // Free remaining memory
     cudaFree(dev_sinogram_float);
     cudaFree(output_dev);
+    cudaUnbindTexture(texreference);
+    free(host_sinogram_float_texture);
+    cudaFree(dev_sinogram_float_texture);
+    cudaFreeArray(carray);
 
     
     /* Export image data. */
