@@ -36,14 +36,14 @@ else
       NVCCFLAGS := -m64 -lcufft
 endif
 
-TARGETS = xray_ct_recon
+TARGETS = xray_ct_recon 
 
 all: $(TARGETS)
 
 xray_ct_recon: ta_utilities.cpp xray_ct_recon.o 
 	$(CC) $^ -o $@ -O3 $(LDFLAGS) -Wall -I$(CUDA_INC_PATH)
 
-xray_ct_recon.o: xray_ct_recon.cu
+xray_ct_recon.o: xray_ct_recon.cu 
 	$(NVCC) $(NVCCFLAGS) -O3 $(EXTRA_NVCCFLAGS) $(GENCODE_FLAGS) -I$(CUDA_INC_PATH) -o $@ -c $<
 
 
