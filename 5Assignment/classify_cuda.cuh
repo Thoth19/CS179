@@ -5,7 +5,7 @@
 #define STEP_SIZE 1
 
 float cudaClassify(
-    float *data,
+    float **data,
     int batch_size, 
     float step_size,
     float *weights, 

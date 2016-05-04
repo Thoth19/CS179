@@ -81,18 +81,17 @@ void readLSAReview(string review_str, float *output, int stride) {
 
 void classify(istream& in_stream, int batch_size) {
     // randomly initialize weights using gaussian fill
-    float * weights = malloc(sizeof(float)*REVIEW_DIM);
+    float weights[REVIEW_DIM];
     gaussianFill(weights, REVIEW_DIM);
-    float **inputs = malloc(2*sizeof(int *));
-    inputs[0] = malloc(REVIEW_DIM * sizeof(int));
-    inputs[1] = malloc(REVIEW_DIM * sizeof(int));
+    float inputs[2][batch_size][REVIEW_DIM+1];
     int num_misclassified = 0;
+    int curr_stream = 0;
     // allocate and initialize buffers on device
-    float *dev_weights;
+    float dev_weights[REVIEW_DIM];
     cudaMalloc((void **) &dev_weights, REVIEW_DIM * sizeof(float));
     cudaMemcpy(dev_weights, weights, REVIEW_DIM*sizeof(float), cudaMemcpyHostToDevice);
-    float *dev_inputs;
-    cudaMalloc((void **) &dev_inputs, batch_size * 2 * sizeof(float));
+    float **dev_inputs;
+    cudaMalloc((void **) &dev_inputs, batch_size * (REVIEW_DIM + 1) * sizeof(float));
 
     // allocate and initialize streams
     cudaStream_t s[2];
@@ -101,16 +100,23 @@ void classify(istream& in_stream, int batch_size) {
     // main loop to process input lines (each line corresponds to a review)
     int review_idx = 0;
     for (string review_str; getline(in_stream, review_str); review_idx++) {
-        for (int i = 0; i < 2; i++) {
             // process review_str with readLSAReview
-            readLSAReview(review_str, inputs[i], 1);
-
-            cudaMemcpyAsync(inputs[i], dev_inputs[i], sizeof(float)*batch_size, cudaMemcpyHostToDevice, s[i]);
-            num_misclassified += cudaClassify(dev_inputs[i], batch_size, STEP_SIZE, dev_weights, s[i]);
-            // How does printing out work? Do I need two weights?
-            cudaMemcpyAsync(dev_weights, weights, REVIEW_DIM*sizeof(float), cudaMemcpyDeviceToHost);
-        }
+            readLSAReview(review_str, inputs[curr_stream][review_idx % batch_size], 1);
+            if(review_idx % batch_size == (batch_size -1))
+            {
+            cudaMemcpyAsync(inputs[curr_stream], dev_inputs, sizeof(float)*batch_size*(1+REVIEW_DIM), cudaMemcpyHostToDevice, s[curr_stream]);
+            num_misclassified = 1;
+            num_misclassified = cudaClassify(dev_inputs, batch_size, STEP_SIZE, dev_weights, s[curr_stream]);
+                if(curr_stream == 0)
+                    curr_stream = 1;
+                else
+                    curr_stream = 0;
+            //cout << "curr_stream" << curr_stream<<endl;
+            cout << "Misclassified points: " << num_misclassified << endl;
+            //cudaMemcpyAsync(dev_weights, weights, REVIEW_DIM*sizeof(float), cudaMemcpyDeviceToHost);
+            }
     }
+            cudaMemcpyAsync(dev_weights, weights, REVIEW_DIM*sizeof(float), cudaMemcpyDeviceToHost);
     for (int i = 0; i < 2; i++) {
         cudaStreamSynchronize(s[i]);
         cudaStreamDestroy(s[i]);
@@ -124,16 +130,12 @@ void classify(istream& in_stream, int batch_size) {
     }
     cout << endl;
 
-    // Print out the error values
+    // Print out the error values (again for visiblity)
     cout << "Misclassified points" << num_misclassified << endl;
 
     // Free all memory
     cudaFree(dev_weights);
     cudaFree(dev_inputs);
-    free(inputs[0]);
-    free(inputs[1]);
-    free(inputs);
-    free(weights);
 }
 
 int main(int argc, char** argv) {

@@ -40,7 +40,7 @@ TARGETS = classify
 all: $(TARGETS)
 
 classify: classify.cc classify.o ta_utilities.o
-	$(CC) $< -std=c++0x -o $@ classify.o ta_utilities.o -O3 $(LDFLAGS) -Wall -I$(CUDA_INC_PATH)
+	$(CC) $< -std=c++11 -o $@ classify.o ta_utilities.o -O3 $(LDFLAGS) -Wall -I$(CUDA_INC_PATH)
 
 classify.o: classify_cuda.cu
 	$(NVCC) $(NVCCFLAGS) -O3 $(EXTRA_NVCCFLAGS) $(GENCODE_FLAGS) -I$(CUDA_INC_PATH) -o $@ -c $<
