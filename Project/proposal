@@ -1,0 +1,69 @@
+Summary:
+
+Use a GPU to generate pseudo random numbers and deliver them
+to the host. 
+
+Background:
+
+Random numbers are highly important to practical computer
+applications. For example, randomized algorithms can compute
+values known to be in P much better than deterministic algorithms
+even though it is likely that a determinsitic solution could be
+better. Finding good determinstici algorithms can be much tricker
+than finding good randomized algorithms. In addition randomized
+algorithms such as genetic algorithms can be very effective at 
+estimating solutions to NP problems in P time.
+
+However, generating randomg numbers is very difficult. While there
+are many places to get random data, such ageners time stamps, mouse/keyboard 
+input, and even heat data from the CPU, there is not much throughput.
+On *Nix systems, /dev/random stores some of this data, but it is not 
+enough for generating a 4096 bit encryption key. Since this data cannot
+be generated quickly, and it would be inefficient to store, computation often
+turns to psuedo random numbers. 
+
+By mimicing most properties of a set of random numbers, it is possible
+to run more computations that require random bits. Thus, we need an algorithm
+that generates random bits of data quickly. This is possible using 
+a GPU to parallelize the proces. We can use techniques from cryptographic 
+ciphers to compute functions that deal only with which value we want
+from an array, not the previous value in order to parallelize. This
+will allow us to avoid frequent cycles and mimic the uniform distribution
+closely, making the numbers appear random.
+
+Challenges:
+
+One challenge is that it is very difficult to tell if numbers are 
+actually random. One way to overcome this is to use a chi squared test
+to check for deviations from the uniform distribution. Another mechanism
+is to check for cycles. In addition, the crush test suite should check 
+for randomness.
+
+This project has been done before. Some notable examples include the 
+Threefish cipher and Philox which I intend to take a look at. The techniques
+are likely too involved for this class, but some of their optimzations
+will probably be useful. Given how important generating random numbers
+is, it is not surprising that parallelizing it for multiple CPUs has existed
+and that people have made major advances in generating random numbers 
+via GPU. According to lecture, the Philox system was able to generate
+202 GB/s which seems like it should be faster than the GPU can send 
+memory to the host machine.
+
+Deliverables:
+
+A program will generate a specified amount of random bits and 
+delvier them to the host machine. It can also keep the data on 
+the GPU so that other kernels can use the data without having
+to cudaMemcpy it back onto the GPU. The randon bits will
+also be easily piped to a file.
+We will be able to check that the code works by checking small
+examples against cpu code with known random seeds and by
+running chi squared tests against the uniform distribution
+for larger samples of random numbers.
+
+Timeline:
+
+In the first week, I plan to get the CPU code working.
+In the second week, I plan to get the GPU code written.
+The third week will be writing the test suite, and fixing
+bugs from week 2.
