@@ -12,12 +12,13 @@ Declaration of kernels.*/
  
 void callOneDimWave(const unsigned int blocks,
         const unsigned int threadsPerBlock,
-        const float *old
+        const float *old,
         const float *curr,
-        float *new,
-        const unsigned int n_Nodes);
+        float *new_d, 
+        const unsigned int n_Nodes,
+        float cour);
 
-void cudaOneDimWaveKernel(const float *old, const float *curr, float *new,
+/*void cudaOneDimWaveKernel(const float *old, const float *curr, float *new_d,
     int n_Nodes);
-
+*/
 #endif // CUDA_1D_FD_WAVE_CUDA_CUH

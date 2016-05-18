@@ -14,30 +14,36 @@
 did. It stores the answers in the newDisplacement. */
 
  __global__
-void cudaOneDimWaveKernel(const float *old, const float *curr, float *new,
-    int n_Nodes) {
+void cudaOneDimWaveKernel(const float *old, const float *curr, float *new_d,
+    int n_Nodes, float cour) {
 
     unsigned int thread_index = blockIdx.x * blockDim.x + threadIdx.x;
-    while(0 < thread_index && thread_index <= ((unsigned int)n_Nodes -2))
+    // Need to check this here so that we still get multiples of (blockDim*gridDim
+         if (thread_index == 0)
+{
+
+        thread_index += (blockDim.x * gridDim.x);
+}
+   while(thread_index < ((unsigned int)n_Nodes -1))
     {
-        new[thread_index] = 
-                2*curr[thread_index] - old[thread_index]
-                + dev_courantSquared * (curr[thread_index+1]
-                        - 2*curr[thread_index] 
-                        + curr[thread_index-1]);
+        new_d[thread_index] = 
+                (1-cour) * 2*curr[thread_index] - old[thread_index]
+                + cour * curr[thread_index+1]
+                + cour * curr[thread_index-1];
         
         // Update the thread index.
         thread_index += (blockDim.x * gridDim.x);
     }
-
+}
 // Calls the kernel by piping in the blocks and threads/block
 // correctly.
 void callOneDimWave(const unsigned int blocks,
         const unsigned int threadsPerBlock,
-        const float *old
+        const float *old,
         const float *curr,
-        float *new,
-        const unsigned int n_Nodes) {
+        float *new_d,
+        const unsigned int n_Nodes,
+        float cour) {
         
-    cudaOneDimWaveKernel<<<blocks, threadsPerBlock>>> (old,curr,new,n_Nodes);
+    cudaOneDimWaveKernel<<<blocks, threadsPerBlock>>> (old,curr,new_d,n_Nodes, cour);
 }
