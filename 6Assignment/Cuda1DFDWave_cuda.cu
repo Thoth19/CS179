@@ -16,23 +16,13 @@ did. It stores the answers in the newDisplacement. */
  __global__
 void cudaOneDimWaveKernel(const float *old, const float *curr, float *new_d,
     int n_Nodes, float cour) {
-
-    unsigned int thread_index = blockIdx.x * blockDim.x + threadIdx.x;
-    // Need to check this here so that we still get multiples of (blockDim*gridDim
-         if (thread_index == 0)
-{
-
-        thread_index += (blockDim.x * gridDim.x);
-}
-   while(thread_index < ((unsigned int)n_Nodes -1))
-    {
-        new_d[thread_index] = 
-                (1-cour) * 2*curr[thread_index] - old[thread_index]
-                + cour * curr[thread_index+1]
-                + cour * curr[thread_index-1];
-        
-        // Update the thread index.
-        thread_index += (blockDim.x * gridDim.x);
+       
+    for (unsigned int a =  1 + blockIdx.x * blockDim.x + threadIdx.x; a <= n_Nodes - 2; a += threadIdx.x*gridDim.x){
+        new_d[a] = 
+                2*curr[a] - old[a]
+                + cour * (curr[a+1]
+                        - 2*curr[a] 
+                        + curr[a-1]);
     }
 }
 // Calls the kernel by piping in the blocks and threads/block

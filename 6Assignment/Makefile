@@ -16,15 +16,15 @@ NVCC            ?= $(CUDA_BIN_PATH)/nvcc
 # OS-specific build flags
 ifeq ($(shell uname),Darwin)
       LDFLAGS   := -Xlinker -rpath $(CUDA_LIB_PATH) -L$(CUDA_LIB_PATH) -lcudart
-      CCFLAGS   := -arch $(OS_ARCH)
+      CCFLAGS   := -arch $(OS_ARCH) -g
 else
   ifeq ($(OS_SIZE),32)
       LDFLAGS   := -L$(CUDA_LIB_PATH) -lcudart
-      CCFLAGS   := -m32
+      CCFLAGS   := -m32 -g
   else
       CUDA_LIB_PATH := $(CUDA_LIB_PATH)64
       LDFLAGS       := -L$(CUDA_LIB_PATH) -lcudart
-      CCFLAGS       := -m64
+      CCFLAGS       := -m64 -g
   endif
 endif
 
@@ -41,13 +41,13 @@ TARGETS = Cuda1DFDWave
 all: $(TARGETS)
 
 Cuda1DFDWave: Cuda1DFDWave.cc Cuda1DFDWave_cuda.o ta_utilities.o
-	$(CC) $< -o $@ Cuda1DFDWave_cuda.o ta_utilities.o -O3 $(LDFLAGS) -Wall -I$(CUDA_INC_PATH) -fopenmp
+	$(CC) -g $< -o $@ Cuda1DFDWave_cuda.o ta_utilities.o -O3 $(LDFLAGS) -Wall -I$(CUDA_INC_PATH) -fopenmp
 
 Cuda1DFDWave_cuda.o: Cuda1DFDWave_cuda.cu
-	$(NVCC) $(NVCCFLAGS) -O3 $(EXTRA_NVCCFLAGS) $(GENCODE_FLAGS) -I$(CUDA_INC_PATH) -o $@ -c $<
+	$(NVCC) -g $(NVCCFLAGS) -O3 $(EXTRA_NVCCFLAGS) $(GENCODE_FLAGS) -I$(CUDA_INC_PATH) -o $@ -c $<
 
 ta_utilities.o: ta_utilities.cpp
-	$(CC) -std=c++11 -O3 $(LDFLAGS) -Wall -I$(CUDA_INC_PATH) -o $@ -c $<
+	$(CC) -g -std=c++11 -O3 $(LDFLAGS) -Wall -I$(CUDA_INC_PATH) -o $@ -c $<
 	
 clean:
 	rm -f *.o $(TARGETS)
