@@ -14,7 +14,7 @@ than finding good randomized algorithms. In addition randomized
 algorithms such as genetic algorithms can be very effective at 
 estimating solutions to NP problems in P time.
 
-However, generating randomg numbers is very difficult. While there
+However, generating random numbers is very difficult. While there
 are many places to get random data, such ageners time stamps, mouse/keyboard 
 input, and even heat data from the CPU, there is not much throughput.
 On *Nix systems, /dev/random stores some of this data, but it is not 
