@@ -1,0 +1,134 @@
+#=============================================================================#
+#            dieharder version 3.31.1 Copyright 2003 Robert G. Brown          #
+#=============================================================================#
+   rng_name    |           filename             |rands/second|
+     file_input|                     LCG_rng.txt|  4.87e+06  |
+#=============================================================================#
+        test_name   |ntup| tsamples |psamples|  p-value |Assessment
+#=============================================================================#
+# The file file_input was rewound 13 times
+   diehard_birthdays|   0|       100|     100|0.68796130|  PASSED  
+# The file file_input was rewound 113 times
+      diehard_operm5|   0|   1000000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 241 times
+  diehard_rank_32x32|   0|     40000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 301 times
+    diehard_rank_6x8|   0|    100000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 328 times
+   diehard_bitstream|   0|   2097152|     100|0.00000000|  FAILED  
+# The file file_input was rewound 537 times
+        diehard_opso|   0|   2097152|     100|0.00000000|  FAILED  
+# The file file_input was rewound 677 times
+        diehard_oqso|   0|   2097152|     100|0.00000000|  FAILED  
+# The file file_input was rewound 743 times
+         diehard_dna|   0|   2097152|     100|0.00000000|  FAILED  
+# The file file_input was rewound 749 times
+diehard_count_1s_str|   0|    256000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 877 times
+diehard_count_1s_byt|   0|    256000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 879 times
+ diehard_parking_lot|   0|     12000|     100|0.03870573|  PASSED  
+# The file file_input was rewound 881 times
+    diehard_2dsphere|   2|      8000|     100|0.03271279|  PASSED  
+# The file file_input was rewound 882 times
+    diehard_3dsphere|   3|      4000|     100|0.07805317|  PASSED  
+# The file file_input was rewound 1113 times
+     diehard_squeeze|   0|    100000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 1113 times
+        diehard_sums|   0|       100|     100|0.07116361|  PASSED  
+# The file file_input was rewound 1123 times
+        diehard_runs|   0|    100000|     100|0.00000008|  FAILED  
+        diehard_runs|   0|    100000|     100|0.00048384|   WEAK   
+# The file file_input was rewound 1258 times
+       diehard_craps|   0|    200000|     100|0.00000000|  FAILED  
+       diehard_craps|   0|    200000|     100|0.00000000|  FAILED
+
+#=============================================================================#
+#            dieharder version 3.31.1 Copyright 2003 Robert G. Brown          #
+#=============================================================================#
+   rng_name    |           filename             |rands/second|
+     file_input|                      MY_rng.txt|  2.97e+06  |
+#=============================================================================#
+        test_name   |ntup| tsamples |psamples|  p-value |Assessment
+#=============================================================================#
+# The file file_input was rewound 13 times
+   diehard_birthdays|   0|       100|     100|0.14251922|  PASSED  
+# The file file_input was rewound 113 times
+      diehard_operm5|   0|   1000000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 241 times
+  diehard_rank_32x32|   0|     40000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 301 times
+    diehard_rank_6x8|   0|    100000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 328 times
+   diehard_bitstream|   0|   2097152|     100|0.32747213|  PASSED  
+# The file file_input was rewound 537 times
+        diehard_opso|   0|   2097152|     100|0.00000000|  FAILED  
+# The file file_input was rewound 677 times
+        diehard_oqso|   0|   2097152|     100|0.00000000|  FAILED  
+# The file file_input was rewound 743 times
+         diehard_dna|   0|   2097152|     100|0.01013952|  PASSED  
+# The file file_input was rewound 749 times
+diehard_count_1s_str|   0|    256000|     100|0.01798919|  PASSED  
+# The file file_input was rewound 877 times
+diehard_count_1s_byt|   0|    256000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 879 times
+ diehard_parking_lot|   0|     12000|     100|0.88193571|  PASSED  
+# The file file_input was rewound 881 times
+    diehard_2dsphere|   2|      8000|     100|0.72525914|  PASSED  
+# The file file_input was rewound 882 times
+    diehard_3dsphere|   3|      4000|     100|0.44661951|  PASSED  
+# The file file_input was rewound 1112 times
+     diehard_squeeze|   0|    100000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 1112 times
+        diehard_sums|   0|       100|     100|0.01589498|  PASSED  
+# The file file_input was rewound 1122 times
+        diehard_runs|   0|    100000|     100|0.00483789|   WEAK   
+        diehard_runs|   0|    100000|     100|0.00184938|   WEAK   
+# The file file_input was rewound 1257 times
+       diehard_craps|   0|    200000|     100|0.00000000|  FAILED  
+       diehard_craps|   0|    200000|     100|0.00000000|  FAILED 
+
+#=============================================================================#
+#            dieharder version 3.31.1 Copyright 2003 Robert G. Brown          #
+#=============================================================================#
+   rng_name    |           filename             |rands/second|
+     file_input|                     XOR_rng.txt|  1.77e+06  |
+#=============================================================================#
+        test_name   |ntup| tsamples |psamples|  p-value |Assessment
+#=============================================================================#
+# The file file_input was rewound 13 times
+   diehard_birthdays|   0|       100|     100|0.96684364|  PASSED  
+# The file file_input was rewound 113 times
+      diehard_operm5|   0|   1000000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 241 times
+  diehard_rank_32x32|   0|     40000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 301 times
+    diehard_rank_6x8|   0|    100000|     100|0.00000002|  FAILED  
+# The file file_input was rewound 328 times
+   diehard_bitstream|   0|   2097152|     100|0.02275031|  PASSED  
+# The file file_input was rewound 537 times
+        diehard_opso|   0|   2097152|     100|0.00000000|  FAILED  
+# The file file_input was rewound 677 times
+        diehard_oqso|   0|   2097152|     100|0.00000000|  FAILED  
+# The file file_input was rewound 743 times
+         diehard_dna|   0|   2097152|     100|0.02819350|  PASSED  
+# The file file_input was rewound 749 times
+diehard_count_1s_str|   0|    256000|     100|0.36476352|  PASSED  
+# The file file_input was rewound 877 times
+diehard_count_1s_byt|   0|    256000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 879 times
+ diehard_parking_lot|   0|     12000|     100|0.07004519|  PASSED  
+# The file file_input was rewound 881 times
+    diehard_2dsphere|   2|      8000|     100|0.37848279|  PASSED  
+# The file file_input was rewound 882 times
+    diehard_3dsphere|   3|      4000|     100|0.71035630|  PASSED  
+# The file file_input was rewound 1113 times
+     diehard_squeeze|   0|    100000|     100|0.00000000|  FAILED  
+# The file file_input was rewound 1113 times
+        diehard_sums|   0|       100|     100|0.07664380|  PASSED  
+# The file file_input was rewound 1123 times
+        diehard_runs|   0|    100000|     100|0.01104562|  PASSED  
+        diehard_runs|   0|    100000|     100|0.00000041|  FAILED  
+# The file file_input was rewound 1258 times
+       diehard_craps|   0|    200000|     100|0.00000000|  FAILED  
+       diehard_craps|   0|    200000|     100|0.00000000|  FAILED
