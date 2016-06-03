@@ -46,8 +46,7 @@ its installation will be provided in the README.
 #include <climits>
 #include <stdint.h>
 
-// GPU REquirements
-#include "ta_utilities.hpp"
+// GPU Requirements
 #include <cuda.h>
 #include <curand.h>
 
@@ -55,7 +54,7 @@ using namespace std;
 
 // Kernel code
 __global__
-cudaConstantKernel(const unsigned int *d_input, unsigned long int *d_output, 
+void cudaConstantKernel(const unsigned long int *d_input, unsigned long int *d_output, 
     unsigned int targetBytes, unsigned int const_val)
 {
     unsigned int thread_index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -68,8 +67,8 @@ cudaConstantKernel(const unsigned int *d_input, unsigned long int *d_output,
     }
 }
 __global__
-cudaLCGKernel(const unsigned int *d_input, unsigned long int *d_output, unsigned int targetBytes, 
-    unsigned int a, unsigned int c, unsigned int m)
+void cudaLCGKernel(const unsigned long int *d_input, unsigned long int *d_output, unsigned int targetBytes, 
+    unsigned long int a, unsigned long int c, unsigned long int m)
 {
     unsigned int thread_index = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned long int x = d_input[thread_index];
@@ -83,7 +82,7 @@ cudaLCGKernel(const unsigned int *d_input, unsigned long int *d_output, unsigned
     }
 }
 __global__
-cudaSCGKernel(const unsigned int *d_input, unsigned long int *d_output, unsigned int targetBytes, 
+void cudaSCGKernel(const unsigned long int *d_input, unsigned long int *d_output, unsigned int targetBytes, 
     unsigned int k)
 {
     unsigned int thread_index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -101,8 +100,8 @@ cudaSCGKernel(const unsigned int *d_input, unsigned long int *d_output, unsigned
 }
 
 __global__
-cudaXORKernel(const unsigned int *d_input, unsigned long int *d_output, unsigned int targetBytes, 
-    unsigned int mult, unsigned int s1, unsigned int s2, unsigned int s3)
+void cudaXORKernel(const unsigned long int *d_input, unsigned long int *d_output, unsigned int targetBytes, 
+    unsigned long int mult, unsigned int s1, unsigned int s2, unsigned int s3)
 {
     unsigned int thread_index = blockIdx.x * blockDim.x + threadIdx.x;
     unsigned long int z = d_input[thread_index];
@@ -110,7 +109,7 @@ cudaXORKernel(const unsigned int *d_input, unsigned long int *d_output, unsigned
     {
         // Assigns the value. Note that the ultiplication is only for the final answer,
         // not part of computing the next iteration.
-        d_input[thread_index] = (unsigned int) z * UINT64_C(mult);
+        d_output[thread_index] = z * mult;
         // Computes the next value
         z ^= z >> s1;
         z ^= z << s2;
@@ -123,7 +122,7 @@ cudaXORKernel(const unsigned int *d_input, unsigned long int *d_output, unsigned
 // Kernel Callers
 void cudaCallConstantKernel(const unsigned int blocks,
     const unsigned int threadsPerBlock, 
-    const unsigned int *d_input,
+    const unsigned long  int *d_input,
     unsigned long int *d_output,
     const unsigned int targetBytes,
     const unsigned int const_val) {
@@ -131,17 +130,17 @@ void cudaCallConstantKernel(const unsigned int blocks,
 }
 void cudaCallLCGKernel(const unsigned int blocks,
     const unsigned int threadsPerBlock, 
-    const unsigned int *d_input,
+    const unsigned long int *d_input,
     unsigned long int *d_output,
     const unsigned int targetBytes,
-    const unsigned int a,
-    const unsigned int c,
-    const unsigned int m) {
+    const unsigned long int a,
+    const unsigned long int c,
+    const unsigned long int m) {
         cudaLCGKernel<<<blocks, threadsPerBlock>>> (d_input, d_output, targetBytes, a,c,m);
 }
 void cudaCallSCGKernel(const unsigned int blocks,
     const unsigned int threadsPerBlock, 
-    const unsigned int *d_input,
+    const unsigned long int *d_input,
     unsigned long int *d_output,
     const unsigned int targetBytes,
     const unsigned int k) {
@@ -149,10 +148,10 @@ void cudaCallSCGKernel(const unsigned int blocks,
 }
 void cudaCallXORKernel(const unsigned int blocks,
     const unsigned int threadsPerBlock, 
-    const unsigned int *d_input,
+    const unsigned long int *d_input,
     unsigned long int *d_output,
     const unsigned int targetBytes,
-    const unsigned int mult
+    const unsigned long int mult,
     const unsigned int s1,
     const unsigned int s2,
     const unsigned int s3) {
@@ -220,8 +219,8 @@ int main(int argc, char const *argv[])
     // As mentioned in class, I intend to parallelize this RNG
     // by starting at multiple places and concatenating at the appropriate places
     // in the sequence.
-    const unsigned int a = 1075731923;  // Approximately 2^30 with some digits changed
-    const unsigned int c = 732971908;   // Approximately 2^29 with some digits changed
+    const unsigned long int a = 1075731923;  // Approximately 2^30 with some digits changed
+    const unsigned long int c = 732971908;   // Approximately 2^29 with some digits changed
     const unsigned long int m = pow(2,63)-1; // We want to use a large number that isn't a power of two
     unsigned long int x = 7;
     
@@ -328,7 +327,7 @@ int main(int argc, char const *argv[])
     // we can't have more than 1024 threads, so we only need that many
     // seeds.
     // These seeds were generated by seed_gen.py
-    int seeds[1024] = {
+    unsigned long int seeds[1024] = {
      2097221417
     ,
      2662086441
@@ -2387,27 +2386,18 @@ int main(int argc, char const *argv[])
     // Now that we've initialized all of the seeds, we can follow the same
     // format as most GPU code.
 
-    // These functions allow you to select the least utilized GPU 
-    // on your system as well as enforce a time limit on program execution.
-    // Please leave these enabled as a courtesy to your fellow classmates
-    // if you are using a shared computer. You may ignore or remove these 
-    // functions if you are running on your local machine.
-    TA_Utilities::select_coldest_GPU();
-    int max_time_allowed_in_seconds = 10;
-    TA_Utilities::enforce_time_limit(max_time_allowed_in_seconds);
-
     // Rather than use CUDA's timing code, I am using the standard c++
     // timer code so that there is consistency between the CPU and GPU
     // timers. 
 
     // Allocate host memory
-    int *input = seeds;
+    unsigned long int *input = seeds;
     // We could use fewer seeds if we are generating less than 1024 numbers.
     // However, that is not the intended use-case of this PRNG. Generating 1024 random
     // integers can be done by the slowest PRNG in the CPU demo in 0.001657 seconds.
     // With that in mind, trying to use less than 1024 values will just end up using
     // the seeds themselves which come from /dev/urandom, making them acceptable.
-    float *output = new long int[targetBytes];
+    unsigned long int *output = new unsigned long int[targetBytes];
 
     // First we will check that the tests are working correctly by generating
     // a non-random set of digits.
@@ -2416,29 +2406,29 @@ int main(int argc, char const *argv[])
     output_file << "# generator constant seed = n/a\ntype: d\ncount: "<<targetBytes <<
         "\nnumbit: 64" << endl;
 
-    clock_t begin = clock();
+    begin = clock();
 
     // Allocate device memory
-    int *d_input;
-    long int *d_output;
-    gpuErrChk(cudaMalloc(&d_input, 1024 * sizeof(int)));
-    gpuErrChk(cudaMalloc(&d_output, targetBytes * sizeof(long int)));
+    unsigned long int *d_input;
+    unsigned long int *d_output;
+    cudaMalloc(&d_input, 1024 * sizeof(unsigned long int));
+    cudaMalloc(&d_output, targetBytes * sizeof(unsigned long int));
 
     // Copy input to GPU
-    gpuErrChk(cudaMemcpy(d_input, input, 1024 * sizeof(int), 
-        cudaMemcpyHostToDevice));
+    cudaMemcpy(d_input, input, 1024 * sizeof(unsigned long int), 
+        cudaMemcpyHostToDevice);
     // Runs Kernel
     cudaCallConstantKernel(blocks, local_size, d_input, d_output, targetBytes, 5);
     // Copies data back.
-    gpuErrChk(cudaMemcpy(output, d_output, targetBytes * sizeof(long int), 
-                cudaMemcpyDeviceToHost));
+    cudaMemcpy(output, d_output, targetBytes * sizeof(unsigned long int), 
+                cudaMemcpyDeviceToHost);
 
     for (int i = 0; i < targetBytes; ++i)
     {
         output_file << output[i];
     }
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     output_file.close();
     cout << "That took " << elapsed_secs << "seconds." <<endl;
 
@@ -2448,8 +2438,8 @@ int main(int argc, char const *argv[])
     // had to do the copying. In addition, saving the data to a file should be part
     // of how long it takest to run. Therefore, so should the copying of data.
     // Free GPU memory.
-    gpuErrChk(cudaFree(d_input));
-    gpuErrChk(cudaFree(d_output));
+    cudaFree(d_input);
+    cudaFree(d_output);
 
     // BUILTIN
     // Now, we will use cuRAND to test against the builtin random genertor.
@@ -2458,12 +2448,11 @@ int main(int argc, char const *argv[])
     output_file << "# generator constant seed = n/a\ntype: d\ncount: "<<targetBytes <<
         "\nnumbit: 64" << endl;
 
-    clock_t begin = clock();
+    begin = clock();
+    unsigned long long int *d_output_prime;
 
     // Allocate device memory
-    int *d_input;
-    long int *d_output;
-    gpuErrChk(cudaMalloc(&d_output, targetBytes * sizeof(long int)));
+    cudaMalloc(&d_output_prime, targetBytes * sizeof(unsigned long int));
 
     // Runs Kernel
     // We will just use cuRand API calls instead for this one
@@ -2475,24 +2464,24 @@ int main(int argc, char const *argv[])
     curandSetPseudoRandomGeneratorSeed(gen, 1234ULL);
 
     /* Generate n floats on device */
-    curandGenerateLongLong(gen, d_output, targetBytes);
+    curandGenerateLongLong(gen, d_output_prime, targetBytes);
 
     /* Copy device memory to host */
-    cudaMemcpy(output, d_output, targetBytes * sizeof(long int), cudaMemcpyDeviceToHost);
+    cudaMemcpy(output, d_output_prime, targetBytes * sizeof(unsigned long int), cudaMemcpyDeviceToHost);
 
 
     for (int i = 0; i < targetBytes; ++i)
     {
         output_file << output[i];
     }
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     output_file.close();
     cout << "That took " << elapsed_secs << "seconds." <<endl;
 
     // Free GPU memory.
     curandDestroyGenerator(gen);
-    gpuErrChk(cudaFree(d_output));
+    cudaFree(d_output);
 
     // LCG
     // This is the first PRNG implementation for the GPU.
@@ -2512,35 +2501,33 @@ int main(int argc, char const *argv[])
     // unsigned long int x = 7;
     // and has not gone out of scope.
     
-    clock_t begin = clock();
+    begin = clock();
 
     // Allocate device memory
-    int *d_input;
-    long int *d_output;
-    gpuErrChk(cudaMalloc(&d_input, 1024 * sizeof(int)));
-    gpuErrChk(cudaMalloc(&d_output, targetBytes * sizeof(long int)));
+    cudaMalloc(&d_input, 1024 * sizeof(unsigned long int));
+    cudaMalloc(&d_output, targetBytes * sizeof(unsigned long int));
 
     // Copy input to GPU
-    gpuErrChk(cudaMemcpy(d_input, input, 1024 * sizeof(int), 
-        cudaMemcpyHostToDevice));
+    cudaMemcpy(d_input, input, 1024 * sizeof(unsigned long int), 
+        cudaMemcpyHostToDevice);
     // Runs Kernel
     cudaCallLCGKernel(blocks, local_size, d_input, d_output, targetBytes, a, c, m);
     // Copies data back.
-    gpuErrChk(cudaMemcpy(output, d_output, targetBytes * sizeof(long int), 
-                cudaMemcpyDeviceToHost));
+    cudaMemcpy(output, d_output, targetBytes * sizeof(unsigned long int), 
+                cudaMemcpyDeviceToHost);
 
     for (int i = 0; i < targetBytes; ++i)
     {
         output_file << output[i];
     }
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     output_file.close();
     cout << "That took " << elapsed_secs << "seconds." <<endl;
 
     // Free GPU memory.
-    gpuErrChk(cudaFree(d_input));
-    gpuErrChk(cudaFree(d_output));
+    cudaFree(d_input);
+    cudaFree(d_output);
 
     // SCG
     // This is the my PRNG algorithm's implementation for the GPU.
@@ -2560,35 +2547,33 @@ int main(int argc, char const *argv[])
     // unsigned long int y_prime;
     // and has not gone out of scope.
 
-    clock_t begin = clock();
+    begin = clock();
 
     // Allocate device memory
-    int *d_input;
-    long int *d_output;
-    gpuErrChk(cudaMalloc(&d_input, 1024 * sizeof(int)));
-    gpuErrChk(cudaMalloc(&d_output, targetBytes * sizeof(long int)));
+    cudaMalloc(&d_input, 1024 * sizeof(unsigned long int));
+    cudaMalloc(&d_output, targetBytes * sizeof(unsigned long int));
 
     // Copy input to GPU
-    gpuErrChk(cudaMemcpy(d_input, input, 1024 * sizeof(int), 
-        cudaMemcpyHostToDevice));
+    cudaMemcpy(d_input, input, 1024 * sizeof(unsigned long int), 
+        cudaMemcpyHostToDevice);
     // Runs Kernel
     cudaCallSCGKernel(blocks, local_size, d_input, d_output, targetBytes, k);
     // Copies data back.
-    gpuErrChk(cudaMemcpy(output, d_output, targetBytes * sizeof(long int), 
-                cudaMemcpyDeviceToHost));
+    cudaMemcpy(output, d_output, targetBytes * sizeof(unsigned long int), 
+                cudaMemcpyDeviceToHost);
 
     for (int i = 0; i < targetBytes; ++i)
     {
         output_file << output[i];
     }
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     output_file.close();
     cout << "That took " << elapsed_secs << "seconds." <<endl;
 
     // Free GPU memory.
-    gpuErrChk(cudaFree(d_input));
-    gpuErrChk(cudaFree(d_output));
+    cudaFree(d_input);
+    cudaFree(d_output);
 
     // XORSHIFT
     // This is the my PRNG algorithm's implementation for the GPU.
@@ -2605,35 +2590,33 @@ int main(int argc, char const *argv[])
     output_file << "# generator XOR_RNG seed = n/a\ntype: d\ncount: "<<targetBytes <<
     "\nnumbit: 64" << endl;
 
-    clock_t begin = clock();
+    begin = clock();
 
     // Allocate device memory
-    int *d_input;
-    long int *d_output;
-    gpuErrChk(cudaMalloc(&d_input, 1024 * sizeof(int)));
-    gpuErrChk(cudaMalloc(&d_output, targetBytes * sizeof(long int)));
+    cudaMalloc(&d_input, 1024 * sizeof(unsigned long int));
+    cudaMalloc(&d_output, targetBytes * sizeof(unsigned long int));
 
     // Copy input to GPU
-    gpuErrChk(cudaMemcpy(d_input, input, 1024 * sizeof(int), 
-        cudaMemcpyHostToDevice));
+    cudaMemcpy(d_input, input, 1024 * sizeof(unsigned long int), 
+        cudaMemcpyHostToDevice);
     // Runs Kernel
     cudaCallXORKernel(blocks, local_size, d_input, d_output, targetBytes, 2685821657736338717, 13, 30, 19);
     // Copies data back.
-    gpuErrChk(cudaMemcpy(output, d_output, targetBytes * sizeof(long int), 
-                cudaMemcpyDeviceToHost));
+    cudaMemcpy(output, d_output, targetBytes * sizeof(unsigned long int), 
+                cudaMemcpyDeviceToHost);
 
     for (int i = 0; i < targetBytes; ++i)
     {
         output_file << output[i];
     }
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    end = clock();
+    elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     output_file.close();
     cout << "That took " << elapsed_secs << "seconds." <<endl;
 
     // Free GPU memory.
-    gpuErrChk(cudaFree(d_input));
-    gpuErrChk(cudaFree(d_output));
+    cudaFree(d_input);
+    cudaFree(d_output);
 
     return 0;
 }
