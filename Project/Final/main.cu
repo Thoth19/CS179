@@ -2425,7 +2425,7 @@ int main(int argc, char const *argv[])
 
     for (int i = 0; i < targetBytes; ++i)
     {
-        output_file << output[i];
+        output_file << output[i]<< "\n";
     }
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -2472,7 +2472,7 @@ int main(int argc, char const *argv[])
 
     for (int i = 0; i < targetBytes; ++i)
     {
-        output_file << output[i];
+        output_file << output[i]<< "\n";
     }
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -2518,7 +2518,7 @@ int main(int argc, char const *argv[])
 
     for (int i = 0; i < targetBytes; ++i)
     {
-        output_file << output[i];
+        output_file << output[i]<< "\n";
     }
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -2564,7 +2564,7 @@ int main(int argc, char const *argv[])
 
     for (int i = 0; i < targetBytes; ++i)
     {
-        output_file << output[i];
+        output_file << output[i]<< "\n";
     }
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -2607,7 +2607,7 @@ int main(int argc, char const *argv[])
 
     for (int i = 0; i < targetBytes; ++i)
     {
-        output_file << output[i];
+        output_file << output[i]<< "\n";
     }
     end = clock();
     elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
