@@ -1,4 +1,4 @@
-# This file generates 1024 random 4-byte integers (c++ ints).
+# This file generates 1024 random 8-byte integers (c++ long longs).
 # Those ints will then be hard coded into
 # the main.cpp file in order to seed any number of threads
 # PRNGs since the maximum thread count for the architectures
@@ -6,7 +6,7 @@
 
 import os
 
-cmd = "od -vAn -N4 -tu4 < /dev/urandom ;  echo ','"
+cmd = "od -vAn -N8 -tu8 < /dev/urandom ;  echo ','"
 os.system("echo '{'")
 for i in range(1024):
     os.system(cmd)

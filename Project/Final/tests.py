@@ -34,7 +34,7 @@ os.system("dieharder -a -g 202 -f LCG_rng.txt")
 print "Done"
 print
 print "Testing the MY RNG."
-os.system("dieharder -a -g 202 -f MY_rng.txt")
+os.system("dieharder -a -g 202 -f SCG_rng.txt")
 # On 1000000 integers it passes diehard_birthdays, diehard_bitstream, 
 # diehard_dna, diehard_count_ls_str, diehard_parking_lot
 # 2dsphere, 3dsphere diehard_runs, and rgb permutations.
@@ -65,7 +65,7 @@ os.system("dieharder -a -g 202 -f LCG_rng_GPU.txt")
 print "Done"
 print
 print "Testing the MY RNG."
-os.system("dieharder -a -g 202 -f MY_rng_GPU.txt")
+os.system("dieharder -a -g 202 -f SCG_rng_GPU.txt")
 # On 1000000 integers it passes:
 print "Done"
 print
