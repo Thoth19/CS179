@@ -1,0 +1,113 @@
+Installation
+
+This project uses the DieHarder test suite. It can be installed via synaptic
+with dieharder, or via apt-get install dieharder on debian based installations
+of Linux.
+
+We assume that python 2.7 is installed and the paths set up correctly.
+In addition, we assume that the standard C++11 libraries are installed.
+
+To run the demo, use "python make.py". It will take care of compiling,
+running the RNGs, and testing the RNGs with dieharder. This will take a 
+very long time because the dieharder suite is so comprehensive.
+I recommend running overnight, or looking at what test I've noted will pass.
+
+Note: It was not possible for me to test the final version of my python script.
+I do not have a local GPU, and dieharder is not installed on any of the servers.
+I ran the code manually on mako, pulled the text files to my computer and ran dieharder
+via test.py manually here. 
+
+What the Program Does
+
+There are three pieces of code that are in the CPU demo.
+make.py:       compilies main.cu, runs the resulting executable, and 
+               runs tests.py
+main.cu:       runs the different RNGs and saves the output in text files
+tests.py:      runs the dieharder test suite on the text files.
+
+Expected Results
+
+There are two aspects to the results. Speed, and quality.
+First, we will discuss the CPU.
+Based on the CPU demo's output, we knew what to expect. The constant
+data would be fastest. The bulitin would be next fastest. The LCG and XOR would
+be of simmilar speeds and the SCG would bring up the rear. There is no reason
+to expect this to change given that the code will not change.
+In performace, the XOR worked the best, followed by the SCG, and then the LCG.
+This is measured by the number of dieharder tests passed given that the better
+algortihms passed a superset of the worse ones. None of this should change.
+
+I expected that with 500 threads and 1 000 000 random numbers, there will be a marked
+speed increase from the CPU to the GPU. The order of speed should still be the same
+because the parralelization technique used is the same. In addition, I expected the speed
+up to be on the order of 10x or greater
+
+Analysis of Preformance
+There are two aspects of performance. Speed, and quality. 
+
+
+First, we will discuss SPEED.
+
+kpseipp@mako:~/CS179/Project/Final$ ./main.out 100000000
+Writing 100000000 equal floats to constant_rng.txt
+That took 1.71995seconds.
+Writing floats from the builtin uniform real distribution to builtin_rng.txt
+That took 6.31671seconds.
+Writing ints via the LCG a=1075731923,c=732971908,m=2^31-1,x_0=7to LCG_rng.txt
+That took 6.92009seconds.
+Writing ints via my rng with k=19,y_0=7to SCG_rng.txt
+That took 25.0508seconds.
+Writing ints via xor-shifting rng with z_0=11, multiplier of 2685821657736338717, and shifts 13,30, and 19 to XOR_rng.txt
+That took 7.38766seconds.
+
+Writing 100000000 equal floats to constant_rng_GPU.txt
+That took 2.72529seconds.
+Writing 100000000 equal floats to builtin_rng_GPU.txt
+That took 5.8333seconds.
+Writing ints via the LCG a=1075731923,c=732971908,m=2^31-1,x_0=7to LCG_rng_GPU.txt
+That took 5.59358seconds.
+Writing ints with with  SCG k=19,y_0=7to SCG_rng_CPU.txt
+That took 5.67759seconds.
+Writing ints via xor-shifting rng with z_0=11, multiplier of 2685821657736338717, and shifts 13,30, and 19 to XOR_rng_GPU.txt
+That took 5.71676seconds.
+
+On n = 1 000 000, note the copying of memory back and forth is expensive enough to make the speedup from CPU
+to GPU mostly trivial. 
+First, we will look at the CPU and GPU results separately. As in the CPU demo, the speed ordering is
+constant < bulitin < LCG < XOR << SCG. The difference between LCG and Builtin is trivial compared to the other
+gaps. Running it multiple times might cause enough fluctuations. Better or worse implementations, or even
+different seeds might affect their speed. SCG is noticeably worse in speed. It is likely impractical to use
+on a CPU even if its quality is better than a LCG. In that regard, my experiment in creating an PRNG is a failure.
+One the GPU, the order was
+constant < LCG < SCG < XOR < builtin.
+I'm not entirely sure why the builtin was the slowest. It obviosluy depends on the implementation. Note how similar in speed my three implemented kernels were. I hypothesize that much of the time was taken up in copying memory back
+and forth. Not all of the time was spent in computing the next random number. Computationally, sine should be significantly
+more expensive as we saw on the CPU. Either the builtin sine is better implemented on the device code (which is possible) or we still weren't taxing the GPU hard enough to see a major effect. Assuming the quality of the SCG is better
+than that of the LCG as it was for the CPU demo, then on a GPU, the tradeoff of an extra tenth of a second per hundred million
+64 bit integers is likely a good one. However, the XORShift is a well documented highly powered PRNG for a reason --
+I don't expect to beat it in speed or quality. 
+
+I intend to run this code on values larger than 10^8, but will remove the CPU SCG from running because it would make 
+the test too burdensome. I hope that on much sample sizes, the GPU code will become incredibly strong compare dto the CPU. Unforunately, it is hard to test these speed ups becauese we still have to run the CPU code.
+
+
+In conclusion, even if the GPU code eventually runs much faster, for many practical purposes, copying the datato and from the GPU is simply too time consuming for the generation to be worthwhile. If one needs more than 10^8
+random numbers, then a GPU would be useful, otherwise it would probably not be worth the effort compared to 
+a  CPU implementation.
+
+
+Now, we will discuss the QUALITY of the results.
+
+Unfortunately, text files made of 10^8 64 bit integers are ~2 GB apiece. This is too large to transfer easily with git.
+It is also rather painful to transfer in other ways over the internet, and tranfering the files being physical access
+is infeasible.
+kpseipp@mako:~/CS179/Project/Final$ du -h XOR_rng_GPU.txt 
+1.9G    XOR_rng_GPU.txt
+
+With that in mind, we will have to content ourselves with copies of the dieharder test suite on 10^7 or 10^6
+values instead. We can assume that the quality will only increase when the sample size is increased.
+
+
+The results of individual tests are mentioned in tests.py.
+The actual results of running them are saved in text files. Those files may not 
+be complete for this demo because of how long it takes to run the tests.
